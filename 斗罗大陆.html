@@ -1,0 +1,537 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>游戏内部号管理系统</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background: linear-gradient(135deg, #1a2a6c, #b21f1f, #fdbb2d);
+            color: #fff;
+            min-height: 100vh;
+            padding: 20px;
+            position: relative;
+            overflow-x: hidden;
+        }
+        
+        /* 背景动画元素 */
+        .bg-animation {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            overflow: hidden;
+        }
+        
+        .bubble {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.1);
+            animation: float 15s infinite ease-in-out;
+        }
+        
+        @keyframes float {
+            0%, 100% {
+                transform: translateY(0) translateX(0);
+            }
+            25% {
+                transform: translateY(-20px) translateX(10px);
+            }
+            50% {
+                transform: translateY(-40px) translateX(-10px);
+            }
+            75% {
+                transform: translateY(-20px) translateX(-15px);
+            }
+        }
+        
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            position: relative;
+            z-index: 1;
+        }
+        
+        header {
+            text-align: center;
+            padding: 30px 0;
+            margin-bottom: 30px;
+        }
+        
+        h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 0 2px 10px rgba(0, 0, 0, 0.3);
+            background: linear-gradient(to right, #ff8a00, #e52e71);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        /* 时间显示区域 */
+        .time-display {
+            background: rgba(0, 0, 0, 0.3);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 30px auto;
+            text-align: center;
+            max-width: 600px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .time-display::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(45deg, rgba(255,138,0,0.1), rgba(229,46,113,0.1));
+            z-index: -1;
+        }
+        
+        .time-title {
+            font-size: 1.2rem;
+            margin-bottom: 15px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+        }
+        
+        .time-title i {
+            color: #ff8a00;
+        }
+        
+        .current-time {
+            font-size: 2.5rem;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 0 0 10px rgba(255, 138, 0, 0.5);
+        }
+        
+        .current-date {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 10px 20px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 5px;
+            background: linear-gradient(to right, #ff8a00, #e52e71);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: 0 15px 30px rgba(0, 0, 0, 0.3);
+        }
+        
+        .card h2 {
+            font-size: 1.5rem;
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .card h2 i {
+            color: #ff8a00;
+        }
+        
+        .link-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .link-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+            transition: all 0.3s ease;
+        }
+        
+        .link-item:hover {
+            background: rgba(255, 255, 255, 0.2);
+            transform: translateX(5px);
+        }
+        
+        .link-item a {
+            color: #fff;
+            text-decoration: none;
+            font-weight: 500;
+            flex-grow: 1;
+        }
+        
+        .link-item a:hover {
+            color: #ff8a00;
+        }
+        
+        .badge {
+            background: linear-gradient(to right, #ff8a00, #e52e71);
+            padding: 5px 12px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: bold;
+        }
+        
+        .highlight {
+            color: #ff8a00;
+            font-weight: bold;
+        }
+        
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+        }
+        
+        .stat-card {
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 15px;
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            transition: transform 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-card h3 {
+            font-size: 2rem;
+            margin-bottom: 10px;
+            color: #ff8a00;
+        }
+        
+        .footer {
+            text-align: center;
+            padding: 20px;
+            margin-top: 40px;
+            border-top: 1px solid rgba(255, 255, 255, 0.2);
+            font-size: 0.9rem;
+            opacity: 0.7;
+        }
+        
+        @media (max-width: 768px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            h1 {
+                font-size: 2.2rem;
+            }
+            
+            .current-time {
+                font-size: 2rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- 背景动画元素 -->
+    <div class="bg-animation" id="bgAnimation"></div>
+    
+    <div class="container">
+        <header>
+             <h1><i class="fas fa-gamepad"></i> 游戏内部号管理系统</h1>
+            <p class="subtitle">专业游戏内部号申请与管理平台</p >
+        </header>
+        
+        <!-- 实时时间显示 -->
+        <div class="time-display">
+            <div class="time-title">
+                <i class="fas fa-clock"></i>
+                <span>当前系统时间</span>
+            </div>
+            <div class="current-time" id="currentTime">00:00:00</div>
+            <div class="current-date" id="currentDate">2025年1月1日 星期X</div>
+        </div>
+        
+        <div class="stats">
+            <div class="stat-card">
+                <h3>6,543</h3>
+                <p>今日访问量</p >
+            </div>
+            <div class="stat-card">
+                <h3>1,248</h3>
+                <p>成功申请人数</p >
+            </div>
+            <div class="stat-card">
+                <h3>86%</h3>
+                <p>申请成功率</p >
+            </div>
+            <div class="stat-card">
+                <h3>32</h3>
+                <p>合作游戏</p >
+            </div>
+        </div>
+        
+        <div class="dashboard">
+            <div class="card">
+                <h2><i class="fas fa-list"></i> 选择游戏</h2>
+                <div class="link-grid">
+                    <div class="link-item">
+                        <a href="https://load.jinyou68.com/game?ch=NTcwOGJyMTI0Mzdicg" target="_blank">斗罗大陆h5 - BT版</a >
+                        <span class="badge">剩余：5个名额</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="https://load.jinyou68.com/game?ch=NTY5OGJyMTI0MzNicg" target="_blank">斗罗大陆武魂觉醒- BT版</a >
+                        <span class="badge">剩余：3个名额</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="https://at.zzcbeis.cn/z/LeDNiM">斗罗大陆魂师对决 - BT版</a >
+                        <span class="badge">剩余：1个名额</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="https://m.25game.com/Android/View/52001/">斗罗大陆猎魂世界 - BT版</a >
+                        <span class="badge">剩余：1个名额</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="https://dl.1heron.com/down/3367/21018">斗罗大陆逆转时空</a >
+                        <span class="badge">ios待更新</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-mobile-alt"></i> 支持系统</h2>
+                <div class="link-grid">
+                    <div class="link-item">
+                        <a href="#android">Android 系统支持</a >
+                        <span class="badge">安卓</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="#ios">iOS 系统支持</a >
+                        <span class="badge">苹果</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="#pc">PC 模拟器支持</a >
+                        <span class="badge">电脑</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="#cross-platform">跨平台数据同步</a >
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-crown"></i> VIP预约人数</h2>
+                <div class="link-grid">
+                    <div class="link-item">
+                        <a href="#vip1">VIP1 特权 (已预约: <span class="highlight">1,243人</span>)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#vip2">VIP2 特权 (已预约: <span class="highlight">856人</span>)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#vip3">VIP3 特权 (已预约: <span class="highlight">432人</span>)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#vip4">SVIP 特权 (已预约: <span class="highlight">198人</span>)</a >
+                        <span class="badge">稀有</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-clock"></i> 申请时间</h2>
+                <div class="link-grid">
+                    <div class="link-item">
+                        <a href="#time1">立即申请 (24小时开放)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#time2">预约申请 (指定时间)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#time3">限时申请 (今日剩余: <span class="highlight">3小时</span>)</a >
+                        <span class="badge">紧急</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="#time4">查看申请时间表</a >
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-user-friends"></i> 剩余名额</h2>
+                <div class="link-grid">
+                    <div class="link-item">
+                        <a href="#quota1">普通内部号 (剩余: <span class="highlight">42个</span>)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#quota2">高级内部号 (剩余: <span class="highlight">15个</span>)</a >
+                        <span class="badge">紧张</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="#quota3">稀有内部号 (剩余: <span class="highlight">3个</span>)</a >
+                        <span class="badge">紧缺</span>
+                    </div>
+                    <div class="link-item">
+                        <a href="#quota4">定制内部号 (剩余: <span class="highlight">1个</span>)</a >
+                        <span class="badge">唯一</span>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="card">
+                <h2><i class="fas fa-users"></i> 预约队伍</h2>
+                <div class="link-grid">
+                    <div class="link-item">
+                        <a href="#team1">快速预约</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#team2">组队预约</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#team3">加入预约队伍 (已有<span class="highlight">68人</span>等待)</a >
+                    </div>
+                    <div class="link-item">
+                        <a href="#team4">查看我的队伍</a >
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="footer">
+            <p>游戏内部号管理系统 &copy; 2025 | 本平台与官方无关，仅供游戏爱好者交流使用</p >
+        </div>
+    </div>
+
+    <script>
+        // 创建背景动画气泡
+        function createBubbles() {
+            const bgAnimation = document.getElementById('bgAnimation');
+            const bubbleCount = 15;
+            
+            for (let i = 0; i < bubbleCount; i++) {
+                const bubble = document.createElement('div');
+                bubble.classList.add('bubble');
+                
+                // 随机大小
+                const size = Math.random() * 100 + 50;
+                bubble.style.width = `${size}px`;
+                bubble.style.height = `${size}px`;
+                
+                // 随机位置
+                bubble.style.left = `${Math.random() * 100}%`;
+                bubble.style.top = `${Math.random() * 100}%`;
+                
+                // 随机动画延迟和持续时间
+                bubble.style.animationDelay = `${Math.random() * 15}s`;
+                bubble.style.animationDuration = `${Math.random() * 10 + 10}s`;
+                
+                bgAnimation.appendChild(bubble);
+            }
+        }
+        
+        // 更新实时时间
+        function updateTime() {
+            const now = new Date();
+            
+            // 格式化时间
+            const hours = String(now.getHours()).padStart(2, '0');
+            const minutes = String(now.getMinutes()).padStart(2, '0');
+            const seconds = String(now.getSeconds()).padStart(2, '0');
+            
+            // 格式化日期
+            const year = now.getFullYear();
+            const month = now.getMonth() + 1;
+            const day = now.getDate();
+            
+            // 星期几
+            const weekdays = ['日', '一', '二', '三', '四', '五', '六'];
+            const weekday = weekdays[now.getDay()];
+            
+            // 更新显示
+            document.getElementById('currentTime').textContent = `${hours}:${minutes}:${seconds}`;
+            document.getElementById('currentDate').textContent = `${year}年${month}月${day}日 星期${weekday}`;
+        }
+        
+        // 为所有链接添加点击效果
+        document.querySelectorAll('.link-item a').forEach(link => {
+            link.addEventListener('click', function(e) {
+                // 创建点击反馈效果
+                const item = this.parentElement;
+                item.style.background = 'rgba(255, 138, 0, 0.3)';
+                
+                setTimeout(() => {
+                    item.style.background = '';
+                    
+                    // 如果不是外部链接，显示提示信息
+                    if (!this.href.includes('load.jinyou68.com') && !this.getAttribute('href').startsWith('http')) {
+                        e.preventDefault();
+                        alert(`您点击了: ${this.textContent}\n\n在实际应用中，这里将跳转到相应页面。`);
+                    }
+                }, 300);
+            });
+        });
+        
+        // 添加卡片悬停效果增强
+        document.querySelectorAll('.card').forEach(card => {
+            card.addEventListener('mouseenter', function() {
+                this.style.transform = 'translateY(-10px)';
+            });
+            
+            card.addEventListener('mouseleave', function() {
+                this.style.transform = 'translateY(0)';
+            });
+        });
+        
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            createBubbles();
+            updateTime();
+            // 每秒更新时间
+            setInterval(updateTime, 1000);
+        });
+    </script>
+</body>
+</html>
